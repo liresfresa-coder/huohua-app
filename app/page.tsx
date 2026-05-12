@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   BookOpen,
@@ -82,6 +83,7 @@ function getBeijingTodayRangeUtcIso(now: Date) {
 }
 
 export default function Home() {
+  const router = useRouter();
   const supabase = useMemo(() => {
     try {
       return getSupabaseClient();
@@ -373,7 +375,11 @@ export default function Home() {
           </div>
         </Link>
 
-        <button className="relative overflow-hidden rounded-2xl border border-white/5 bg-[#11192C]/80 p-3.5 text-left backdrop-blur-md">
+        <button
+          type="button"
+          onClick={() => router.push("/training")}
+          className="relative overflow-hidden rounded-2xl border border-white/5 bg-[#11192C]/80 p-3.5 text-left backdrop-blur-md cursor-pointer hover:opacity-80 active:scale-95 transition-all"
+        >
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-teal-500/20 text-teal-400">
               <CalendarCheck2 className="h-5 w-5" />
@@ -394,7 +400,11 @@ export default function Home() {
           />
         </button>
 
-        <button className="relative overflow-hidden rounded-2xl border border-white/5 bg-[#11192C]/80 p-3.5 text-left backdrop-blur-md">
+        <button
+          type="button"
+          onClick={() => router.push("/records")}
+          className="relative overflow-hidden rounded-2xl border border-white/5 bg-[#11192C]/80 p-3.5 text-left backdrop-blur-md cursor-pointer hover:opacity-80 active:scale-95 transition-all"
+        >
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500/20 text-yellow-400">
               <Trophy className="h-5 w-5" />

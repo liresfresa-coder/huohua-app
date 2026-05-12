@@ -157,6 +157,63 @@ function ProgressBar({ value }: { value: number }) {
 }
 
 export default function AdminDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      return localStorage.getItem("huohua_admin") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("huohua_admin") === "true") setIsAuthenticated(true);
+    } catch {}
+  }, []);
+
+  function verify() {
+    if (password === "admin888") {
+      try {
+        localStorage.setItem("huohua_admin", "true");
+      } catch {}
+      setIsAuthenticated(true);
+      setPassword("");
+      return;
+    }
+    window.alert("指挥官身份核验失败");
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center px-6">
+        <div className="w-full max-w-md rounded-2xl border border-cyan-500/20 bg-white/[0.03] p-6 backdrop-blur-md shadow-[0_0_30px_rgba(34,211,238,0.15)]">
+          <div className="text-sm font-semibold text-white">后台安全验证</div>
+          <div className="mt-1 text-xs font-light text-slate-400">
+            输入暗号以解锁司令部控制台
+          </div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") verify();
+            }}
+            placeholder="请输入密码"
+            className="mt-4 w-full rounded-xl border border-white/10 bg-[#0B1324]/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-500/10"
+          />
+          <button
+            type="button"
+            onClick={verify}
+            className="mt-4 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-[0.99] transition-all"
+          >
+            验证身份
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const router = useRouter();
   const pathname = usePathname();
   const supabase = useMemo(() => {
