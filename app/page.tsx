@@ -18,8 +18,9 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getSupabaseClient } from "@/src/lib/supabase";
+import { useUser } from "@/context/UserContext";
 
 type FocusSessionRow = {
   duration: number | null;
@@ -45,7 +46,7 @@ function pickId(row: CourseDbRow) {
 }
 
 function getGreeting(hour: number) {
-  if (hour >= 0 && hour <= 11) return "早上好";
+  if (hour >= 5 && hour <= 11) return "早上好";
   if (hour >= 12 && hour <= 17) return "下午好";
   return "晚上好";
 }
@@ -84,6 +85,7 @@ function getBeijingTodayRangeUtcIso(now: Date) {
 
 export default function Home() {
   const router = useRouter();
+  const supportTapGuardRef = useRef(0);
   const supabase = useMemo(() => {
     try {
       return getSupabaseClient();
@@ -92,7 +94,7 @@ export default function Home() {
     }
   }, []);
 
-  const [nickname, setNickname] = useState("小宇");
+  const { nickname } = useUser();
   const [greeting, setGreeting] = useState(() => getGreeting(new Date().getHours()));
   const [beijingDate, setBeijingDate] = useState(() => formatBeijingMd(new Date()));
   const [todayMinutes, setTodayMinutes] = useState(0);
@@ -118,10 +120,6 @@ export default function Home() {
       try {
         const { data: userData } = await sb.auth.getUser();
         if (cancelled) return;
-
-        const email = userData.user?.email ?? "";
-        const name = email.split("@")[0] || "小宇";
-        setNickname(name);
 
         const userId = userData.user?.id ?? null;
 
@@ -237,8 +235,15 @@ export default function Home() {
     };
   }, [supabase]);
 
+  function fireSupportAlert(message: string) {
+    const now = Date.now();
+    if (now - supportTapGuardRef.current < 650) return;
+    supportTapGuardRef.current = now;
+    window.alert(message);
+  }
+
   return (
-    <main className="flex-1 pt-6 pb-6">
+    <main className="flex-1 pt-6 pb-32">
       <header>
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 text-sm font-semibold text-white">
@@ -433,19 +438,37 @@ export default function Home() {
           有问题？我们随时为你和家长提供帮助
         </div>
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <button className="flex flex-col items-center gap-2 rounded-2xl bg-white/[0.02] p-3">
+          <button
+            type="button"
+            onClick={() => fireSupportAlert("请添加专属班主任微信：Teacher_001")}
+            onPointerUp={() => fireSupportAlert("请添加专属班主任微信：Teacher_001")}
+            onTouchEnd={() => fireSupportAlert("请添加专属班主任微信：Teacher_001")}
+            className="flex flex-col items-center gap-2 rounded-2xl bg-white/[0.02] p-3 cursor-pointer hover:bg-slate-800/50 active:scale-95 transition-all"
+          >
             <span className="grid h-12 w-12 place-items-center rounded-full bg-blue-500/15">
               <User className="h-5 w-5 text-[#00C6FF]" />
             </span>
             <span className="text-xs font-medium text-white/80">联系老师</span>
           </button>
-          <button className="flex flex-col items-center gap-2 rounded-2xl bg-white/[0.02] p-3">
+          <button
+            type="button"
+            onClick={() => fireSupportAlert("请添加小助手微信获取入群链接：Assistant_001")}
+            onPointerUp={() => fireSupportAlert("请添加小助手微信获取入群链接：Assistant_001")}
+            onTouchEnd={() => fireSupportAlert("请添加小助手微信获取入群链接：Assistant_001")}
+            className="flex flex-col items-center gap-2 rounded-2xl bg-white/[0.02] p-3 cursor-pointer hover:bg-slate-800/50 active:scale-95 transition-all"
+          >
             <span className="grid h-12 w-12 place-items-center rounded-full bg-blue-500/15">
               <Users className="h-5 w-5 text-[#00C6FF]" />
             </span>
             <span className="text-xs font-medium text-white/80">加入学习群</span>
           </button>
-          <button className="flex flex-col items-center gap-2 rounded-2xl bg-white/[0.02] p-3">
+          <button
+            type="button"
+            onClick={() => fireSupportAlert("请添加专属顾问微信：Consultant_001")}
+            onPointerUp={() => fireSupportAlert("请添加专属顾问微信：Consultant_001")}
+            onTouchEnd={() => fireSupportAlert("请添加专属顾问微信：Consultant_001")}
+            className="flex flex-col items-center gap-2 rounded-2xl bg-white/[0.02] p-3 cursor-pointer hover:bg-slate-800/50 active:scale-95 transition-all"
+          >
             <span className="grid h-12 w-12 place-items-center rounded-full bg-blue-500/15">
               <Headset className="h-5 w-5 text-[#00C6FF]" />
             </span>

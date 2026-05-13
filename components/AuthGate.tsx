@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import BottomNavigation from "@/components/BottomNavigation";
 import Login from "@/components/Login";
 import { getSupabaseClient } from "@/src/lib/supabase";
+import { useUser } from "@/context/UserContext";
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const supabase = useMemo(() => {
@@ -19,6 +20,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
+  const { setIdentityEmail, updateUserInfo, resetUserInfo } = useUser();
 
   useEffect(() => {
     if (!supabase) {
@@ -52,12 +55,70 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     };
   }, [supabase]);
 
+  useEffect(() => {
+    if (loading) return;
+    if (!pathname) return;
+
+    if (!session && pathname !== "/login") {
+      router.replace("/login");
+      return;
+    }
+
+    if (session && pathname === "/login") {
+      router.replace("/");
+    }
+  }, [loading, pathname, router, session]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (!session?.user) {
+      resetUserInfo();
+      return;
+    }
+    const email = session.user.email ?? null;
+    if (!email) return;
+    setIdentityEmail(email);
+    const metaNick = (session.user.user_metadata as Record<string, unknown> | null)?.nickname;
+    const metaAvatar = (session.user.user_metadata as Record<string, unknown> | null)?.avatar;
+    const storedNick = (() => {
+      try {
+        const v = localStorage.getItem(`nickname_${email}`);
+        return typeof v === "string" && v.trim() ? v.trim() : "";
+      } catch {
+        return "";
+      }
+    })();
+    const storedAvatar = (() => {
+      try {
+        const v = localStorage.getItem(`avatar_${email}`);
+        return typeof v === "string" && v.trim() ? v : null;
+      } catch {
+        return null;
+      }
+    })();
+    const nickname =
+      typeof metaNick === "string" && metaNick.trim()
+        ? metaNick.trim()
+        : storedNick
+          ? storedNick
+          : (email.split("@")[0] || "探索者").trim() || "探索者";
+    const avatar =
+      typeof metaAvatar === "string" && metaAvatar.trim()
+        ? metaAvatar
+        : storedAvatar;
+    updateUserInfo(nickname, avatar);
+  }, [loading, resetUserInfo, session, setIdentityEmail, updateUserInfo]);
+
   if (loading) {
     return null;
   }
 
   if (!session) {
-    return <Login />;
+    return pathname === "/login" ? <Login /> : null;
+  }
+
+  if (pathname === "/login") {
+    return null;
   }
 
   const isAdminRoute = pathname.startsWith("/admin");

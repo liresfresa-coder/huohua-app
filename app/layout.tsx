@@ -1,18 +1,8 @@
 import type { Metadata } from "next";
 import type { Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AuthGate from "@/components/AuthGate";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { UserProvider } from "@/context/UserContext";
 
 export const metadata: Metadata = {
   title: "火花脑机",
@@ -33,11 +23,13 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className="h-full antialiased"
     >
       <body className="min-h-dvh overflow-y-scroll">
         <div className="relative min-h-dvh bg-[#060B19] text-white">
-          <AuthGate>{children}</AuthGate>
+          <UserProvider>
+            <AuthGate>{children}</AuthGate>
+          </UserProvider>
         </div>
       </body>
     </html>

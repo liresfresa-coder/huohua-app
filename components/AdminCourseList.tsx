@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   BookOpen,
@@ -57,13 +57,13 @@ const menuItems: Array<{
   href?: string;
 }> = [
   { key: "dashboard", label: "仪表盘", Icon: LayoutDashboard, href: "/admin" },
-  { key: "users", label: "用户管理", Icon: Users },
+  { key: "users", label: "用户管理", Icon: Users, href: "/admin/users" },
   { key: "courses", label: "课程管理", Icon: BookOpen, href: "/admin/courses" },
-  { key: "categories", label: "内容分类", Icon: Tags },
-  { key: "data", label: "数据中心", Icon: Database },
-  { key: "private", label: "私域配置", Icon: SlidersHorizontal },
-  { key: "home", label: "首页配置", Icon: SlidersHorizontal },
-  { key: "system", label: "系统设置", Icon: Settings },
+  { key: "categories", label: "内容分类", Icon: Tags, href: "/admin/categories" },
+  { key: "data", label: "数据中心", Icon: Database, href: "/admin/data" },
+  { key: "private", label: "私域配置", Icon: SlidersHorizontal, href: "/admin/private" },
+  { key: "home", label: "首页配置", Icon: SlidersHorizontal, href: "/admin/home" },
+  { key: "system", label: "系统设置", Icon: Settings, href: "/admin/system" },
 ];
 
 function Tag({ children }: { children: string }) {
@@ -323,7 +323,12 @@ export default function AdminCourseList() {
   }, []);
 
   function verify() {
-    if (password === "admin888") {
+    const normalized = password
+      .trim()
+      .replace(/\u3000/g, " ")
+      .replace(/[\uFF01-\uFF5E]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0xfee0))
+      .toLowerCase();
+    if (normalized === "admin888") {
       try {
         localStorage.setItem("huohua_admin", "true");
       } catch {}
@@ -334,36 +339,6 @@ export default function AdminCourseList() {
     window.alert("指挥官身份核验失败");
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center px-6">
-        <div className="w-full max-w-md rounded-2xl border border-cyan-500/20 bg-white/[0.03] p-6 backdrop-blur-md shadow-[0_0_30px_rgba(34,211,238,0.15)]">
-          <div className="text-sm font-semibold text-white">后台安全验证</div>
-          <div className="mt-1 text-xs font-light text-slate-400">
-            输入暗号以解锁司令部控制台
-          </div>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") verify();
-            }}
-            placeholder="请输入密码"
-            className="mt-4 w-full rounded-xl border border-white/10 bg-[#0B1324]/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-500/10"
-          />
-          <button
-            type="button"
-            onClick={verify}
-            className="mt-4 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-[0.99] transition-all"
-          >
-            验证身份
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const supabase = useMemo(() => {
     try {
       return getSupabaseClient();
@@ -371,6 +346,16 @@ export default function AdminCourseList() {
       return null;
     }
   }, []);
+  const pathname = usePathname();
+  const router = useRouter();
+  const navTapGuardRef = useRef(0);
+
+  function go(href: string) {
+    const now = Date.now();
+    if (now - navTapGuardRef.current < 450) return;
+    navTapGuardRef.current = now;
+    router.push(href);
+  }
 
   const [collapsed, setCollapsed] = useState(false);
   const [query, setQuery] = useState("");
@@ -1331,6 +1316,36 @@ export default function AdminCourseList() {
     showToast("课程已删除");
   }
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center px-6">
+        <div className="w-full max-w-md rounded-2xl border border-cyan-500/20 bg-white/[0.03] p-6 backdrop-blur-md shadow-[0_0_30px_rgba(34,211,238,0.15)]">
+          <div className="text-sm font-semibold text-white">后台安全验证</div>
+          <div className="mt-1 text-xs font-light text-slate-400">
+            输入暗号以解锁司令部控制台
+          </div>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") verify();
+            }}
+            placeholder="请输入密码"
+            className="mt-4 w-full rounded-xl border border-white/10 bg-[#0B1324]/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none focus:border-cyan-400/40 focus:ring-2 focus:ring-cyan-500/10"
+          />
+          <button
+            type="button"
+            onClick={verify}
+            className="mt-4 w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 hover:opacity-90 active:scale-[0.99] transition-all"
+          >
+            验证身份
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-dvh w-full bg-[#0A0F1C] text-white">
       <div className="flex min-h-dvh">
@@ -1362,7 +1377,14 @@ export default function AdminCourseList() {
             <nav className="px-3">
               <div className="space-y-1">
                 {menuItems.map((item) => {
-                  const isActive = item.key === "courses";
+                  const isActive =
+                    item.key === "dashboard"
+                      ? pathname === "/admin" || pathname === "/admin/dashboard"
+                      : item.key === "courses"
+                        ? pathname.startsWith("/admin/courses")
+                        : item.href
+                          ? pathname.startsWith(item.href)
+                          : false;
                   const Icon = item.Icon;
                   const content = (
                     <>
@@ -1385,12 +1407,16 @@ export default function AdminCourseList() {
                       : "text-slate-200/80 hover:bg-white/5",
                   ].join(" ");
 
-                  return item.href ? (
-                    <Link key={item.key} href={item.href} className={className}>
-                      {content}
-                    </Link>
-                  ) : (
-                    <button key={item.key} className={className}>
+                  const href = item.href ?? "/admin";
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      onClick={() => go(href)}
+                      onPointerUp={() => go(href)}
+                      onTouchEnd={() => go(href)}
+                      className={className}
+                    >
                       {content}
                     </button>
                   );

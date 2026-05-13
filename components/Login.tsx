@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSupabaseClient } from "@/src/lib/supabase";
+import { useUser } from "@/context/UserContext";
 
 type ToastState =
   | null
@@ -11,6 +12,7 @@ type ToastState =
 
 export default function Login() {
   const router = useRouter();
+  const { avatar, updateUserInfo, setIdentityEmail } = useUser();
   const supabase = useMemo(() => {
     try {
       return getSupabaseClient();
@@ -43,7 +45,7 @@ export default function Login() {
 
     try {
       if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -52,6 +54,37 @@ export default function Login() {
           setToast({ variant: "error", message: "登录失败" });
           return;
         }
+        const userEmail = data.user?.email ?? email;
+        const metaNick = (data.user?.user_metadata as Record<string, unknown> | null)?.nickname;
+        const metaAvatar = (data.user?.user_metadata as Record<string, unknown> | null)?.avatar;
+        const storedNick = (() => {
+          try {
+            const v = localStorage.getItem(`nickname_${userEmail}`);
+            return typeof v === "string" && v.trim() ? v.trim() : "";
+          } catch {
+            return "";
+          }
+        })();
+        const storedAvatar = (() => {
+          try {
+            const v = localStorage.getItem(`avatar_${userEmail}`);
+            return typeof v === "string" && v.trim() ? v : null;
+          } catch {
+            return null;
+          }
+        })();
+        const name =
+          typeof metaNick === "string" && metaNick.trim()
+            ? metaNick.trim()
+            : storedNick
+              ? storedNick
+              : (userEmail.split("@")[0] || "探索者").trim() || "探索者";
+        const nextAvatar =
+          typeof metaAvatar === "string" && metaAvatar.trim()
+            ? metaAvatar
+            : storedAvatar ?? avatar;
+        if (userEmail) setIdentityEmail(userEmail);
+        updateUserInfo(name, nextAvatar);
         setToast({ variant: "success", message: "登录成功" });
         router.replace("/");
         router.refresh();
@@ -74,6 +107,37 @@ export default function Login() {
         return;
       }
 
+      const userEmail = data.user?.email ?? email;
+      const metaNick = (data.user?.user_metadata as Record<string, unknown> | null)?.nickname;
+      const metaAvatar = (data.user?.user_metadata as Record<string, unknown> | null)?.avatar;
+      const storedNick = (() => {
+        try {
+          const v = localStorage.getItem(`nickname_${userEmail}`);
+          return typeof v === "string" && v.trim() ? v.trim() : "";
+        } catch {
+          return "";
+        }
+      })();
+      const storedAvatar = (() => {
+        try {
+          const v = localStorage.getItem(`avatar_${userEmail}`);
+          return typeof v === "string" && v.trim() ? v : null;
+        } catch {
+          return null;
+        }
+      })();
+      const name =
+        typeof metaNick === "string" && metaNick.trim()
+          ? metaNick.trim()
+          : storedNick
+            ? storedNick
+            : (userEmail.split("@")[0] || "探索者").trim() || "探索者";
+      const nextAvatar =
+        typeof metaAvatar === "string" && metaAvatar.trim()
+          ? metaAvatar
+          : storedAvatar ?? avatar;
+      if (userEmail) setIdentityEmail(userEmail);
+      updateUserInfo(name, nextAvatar);
       setToast({ variant: "success", message: "欢迎加入" });
       router.replace("/");
       router.refresh();
