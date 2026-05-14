@@ -24,9 +24,15 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   const { setIdentityEmail, updateUserInfo, resetUserInfo } = useUser();
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setLoading(false);
+      setSession(null);
+    }, 1500);
+
     if (!supabase) {
       setLoading(false);
       setSession(null);
+      window.clearTimeout(timeoutId);
       return;
     }
 
@@ -38,11 +44,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         setSession(data.session ?? null);
         setLoading(false);
+        window.clearTimeout(timeoutId);
       })
       .catch(() => {
         if (cancelled) return;
         setSession(null);
         setLoading(false);
+        window.clearTimeout(timeoutId);
       });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
@@ -51,6 +59,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timeoutId);
       sub.subscription.unsubscribe();
     };
   }, [supabase]);
