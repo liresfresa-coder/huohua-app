@@ -26,6 +26,7 @@ type ServiceRow = {
   iconName: string;
   iconWrapClassName: string;
   status: string;
+  href?: string | null;
 };
 
 type ServiceDbRow = Record<string, unknown>;
@@ -99,10 +100,22 @@ export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  const radarUrl = "https://huohuabrain.top";
 
   function showToast(message: string) {
     setToast(message);
     window.setTimeout(() => setToast(null), 1600);
+  }
+
+  function openExternal(url: string) {
+    const target = url.startsWith("http://") || url.startsWith("https://") ? url : `https://${url.replace(/^\/+/, "")}`;
+    const w = window.open(target, "_blank", "noopener,noreferrer");
+    if (w) w.opener = null;
+  }
+
+  function isRadarEntry(title: string, subtitle: string) {
+    const text = `${title} ${subtitle}`.toLowerCase();
+    return text.includes("火花雷达") || text.includes("雷达") || text.includes("分析");
   }
 
   function openEdit() {
@@ -217,15 +230,18 @@ export default function ProfilePage() {
     const id = pickId(row) || `tmp_${Math.random().toString(16).slice(2)}`;
     const title = pickString(row, ["title", "name", "label"]);
     const subtitle = pickString(row, ["description", "subtitle", "desc", "hint"]);
+    const href = pickString(row, ["href", "url", "link", "jump_url", "jumpUrl", "target_url", "targetUrl"]);
     const iconName = pickString(row, ["icon_name", "iconName", "icon"]) || "User";
     const status = pickString(row, ["status", "right_tag", "tag", "badge", "badge_text"]) || "在线";
+    const resolvedTitle = title || "未命名服务";
     return {
       id,
-      title: title || "未命名服务",
+      title: resolvedTitle,
       subtitle: subtitle || "—",
       iconName,
       iconWrapClassName: resolveIconWrapClassName(iconName, index),
       status,
+      href: isRadarEntry(resolvedTitle, subtitle || "") ? radarUrl : href || null,
     };
   }
 
@@ -339,6 +355,10 @@ export default function ProfilePage() {
             <button
               key={item.id}
               type="button"
+              onClick={() => {
+                if (!isRadarEntry(item.title, item.subtitle)) return;
+                openExternal(radarUrl);
+              }}
               className="w-full flex items-center gap-3 rounded-2xl px-3 py-3 text-left hover:bg-white/5 transition-colors"
             >
               <div className={["h-10 w-10 rounded-2xl grid place-items-center", item.iconWrapClassName].join(" ")}>
