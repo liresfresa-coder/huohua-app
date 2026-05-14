@@ -114,7 +114,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!session) {
-    return pathname === "/login" ? <Login /> : null;
+    return <Login />;
   }
 
   if (pathname === "/login") {

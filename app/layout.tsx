@@ -7,6 +7,7 @@ import { UserProvider } from "@/context/UserContext";
 export const metadata: Metadata = {
   title: "火花脑机",
   description: "青少年专注力训练与课程交付",
+  metadataBase: new URL("https://huohuabrain.top"),
 };
 
 export const viewport: Viewport = {
